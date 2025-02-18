@@ -135,23 +135,23 @@ img {
         }
 
         // ฟังก์ชันอัปโหลดรูปภาพ
-        async function uploadImage(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // async function uploadImage(event) {
+        //     const file = event.target.files[0];
+        //     if (!file) return;
 
-            const storageRef = ref(storage, classroom_images/${Date.now()}_${file.name});
+        //     const storageRef = ref(storage, classroom_images/${Date.now()}_${file.name});
 
-            try {
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
+        //     try {
+        //         await uploadBytes(storageRef, file);
+        //         const downloadURL = await getDownloadURL(storageRef);
 
-                document.getElementById("class_image").src = downloadURL;
-                console.log("อัปโหลดรูปภาพสำเร็จ", downloadURL);
-            } catch (error) {
-                console.error("อัปโหลดรูปไม่สำเร็จ", error);
-                alert("อัปโหลดรูปไม่สำเร็จ");
-            }
-        }
+        //         document.getElementById("class_image").src = downloadURL;
+        //         console.log("อัปโหลดรูปภาพสำเร็จ", downloadURL);
+        //     } catch (error) {
+        //         console.error("อัปโหลดรูปไม่สำเร็จ", error);
+        //         alert("อัปโหลดรูปไม่สำเร็จ");
+        //     }
+        // }
 
         // ทำให้ฟังก์ชันสามารถเรียกใช้ได้ใน HTML
         window.addClassroom = addClassroom;
