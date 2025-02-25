@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="../src/log2.css">
+</head>
+<body class="flex items-center justify-center min-h-screen text-white" style="background: url('sc9.jpg') center/cover no-repeat;" id="body">
+    <div class="absolute inset-0 bg-overlay"></div>
+    <button class="toggle-dark-mode" onclick="toggleDarkMode()" id="darkModeButton">🌙</button>
+    <div class="relative z-10 w-[400px] login-container text-center">
+        <h2 class="text-2xl font-semibold mb-4">เข้าสู่ระบบ</h2>
+        <form onsubmit="handleLogin(event)">
+            <div class="space-y-4">
+                <div class="input-group">
+                    <img src="mail.png" alt="Email" width="20" class="mr-2">
+                    <input type="text" id="email" placeholder="อีเมล" required>
+                </div>
+                <div class="input-group">
+                    <img src="lock.png" alt="Password" width="20" class="mr-2">
+                    <input type="password" id="password" placeholder="รหัสผ่าน" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-md text-lg login-button">เข้าสู่ระบบ</button>
+            </div>
+        </form>
+        <p class="mt-10 text-gray-300">หรือเข้าสู่ระบบด้วย</p>
+        <div class="social-icons">
+            <button onclick="confirmRedirect('google')"><img src="googleg.png" alt="Google" width="24"></button>
+            <button onclick="confirmRedirect('facebook')"><img src="facebook.png" alt="Facebook" width="24"></button>
+            <button onclick="confirmRedirect('apple')"><img src="apple-logo.png" alt="Apple" width="24"></button>
+        </div>
+    </div>
+    <script>
+        function toggleDarkMode() {
+            const body = document.getElementById('body');
+            body.classList.toggle('dark-mode');
+            const darkModeButton = document.getElementById('darkModeButton');
+            darkModeButton.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        }
+        
+        function confirmRedirect(provider) {
+            const urls = {
+                google: 'https://accounts.google.com/signin',
+                facebook: 'https://www.facebook.com/login.php',
+                apple: 'https://appleid.apple.com/auth/authorize'
+            };
+            
+            const confirmAction = confirm(`คุณต้องการเข้าสู่ระบบด้วย ${provider.charAt(0).toUpperCase() + provider.slice(1)} ใช่หรือไม่?`);
+            if (confirmAction) {
+                window.location.href = urls[provider];
+            }
+        }
+    </script>
+</body>
+</html>
