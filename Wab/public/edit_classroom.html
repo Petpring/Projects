@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แก้ไขห้องเรียน</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Kanit', sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #f9f9f9, #eef2f3);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .save-btn {
+            background-color: #34A853;
+            color: white;
+        }
+        .save-btn:hover {
+            background-color: #2C8C45;
+        }
+        .delete-btn {
+            background-color: #DB4437;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #C1351D;
+        }
+        .home-btn {
+        background-color: #4285F4;
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .home-btn:hover {
+        background-color: #357ae8;
+    }
+
+    .save-btn {
+        background-color: #34A853;
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .save-btn:hover {
+        background-color: #2C8C45;
+    }
+
+    .delete-btn {
+        background-color: #DB4437;
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .delete-btn:hover {
+        background-color: #C1351D;
+    }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
+            authDomain: "sc362202project2024.firebaseapp.com",
+            projectId: "sc362202project2024",
+            storageBucket: "sc362202project2024.appspot.com",
+            messagingSenderId: "1073660061425",
+            appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('classId');
+        const classNameInput = document.getElementById("class-name");
+        const roomNameInput = document.getElementById("room-name");
+        const saveBtn = document.getElementById("save-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+
+        async function loadClassroomData() {
+            if (!classId) return;
+            const docRef = doc(db, "classroom", classId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                classNameInput.value = docSnap.data().class_name;
+                roomNameInput.value = docSnap.data().room_name;
+            }
+        }
+
+        saveBtn.addEventListener("click", async () => {
+            if (!classId) return;
+            const docRef = doc(db, "classroom", classId);
+            await updateDoc(docRef, {
+                class_name: classNameInput.value,
+                room_name: roomNameInput.value
+            });
+            alert("อัปเดตข้อมูลสำเร็จ!");
+            window.location.href = "index.html";
+        });
+
+        deleteBtn.addEventListener("click", async () => {
+            if (!classId) return;
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบห้องเรียนนี้?")) {
+                await deleteDoc(doc(db, "classroom", classId));
+                alert("ลบข้อมูลสำเร็จ!");
+                window.location.href = "index.html";
+            }
+        });
+
+        loadClassroomData();
+
+        document.getElementById("home-btn").addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+    </script>
+</head>
+<body>
+    <div class="container">
+       
+        <h2>แก้ไขห้องเรียน</h2>
+        <label>ชื่อวิชา:</label>
+        <input type="text" id="class-name" placeholder="กรอกชื่อวิชา">
+        <label>ห้องเรียน:</label>
+        <input type="text" id="room-name" placeholder="กรอกห้องเรียน">
+        <button id="home-btn" class="home-btn">กลับหน้าหลัก</button>
+        <button id="save-btn" class="save-btn">บันทึก</button>
+        <button id="delete-btn" class="delete-btn">ลบห้องเรียน</button>
+    </div>
+</body>
+</html>
