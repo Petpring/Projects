@@ -1,227 +1,255 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบจัดการห้องเรียน</title>
-<style>
-body {
-font-family: Arial, sans-serif;
-text-align: center;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการห้องเรียน</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Kanit', sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #f9f9f9, #eef2f3);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+        }
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+        button img {
+            width: 20px;
+            height: 20px;
+        }
+        #logout-btn {
+            background-color: #DB4437;
+        }
+        #logout-btn:hover {
+            background-color: #C1351D;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #4285F4;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 20px 0;
 }
 
-button {
-display: inline-flex;
-align-items: center;
-gap: 8px;
-background-color: #4285F4;
-color: white;
-border: none;
-padding: 10px 16px;
-font-size: 16px;
-font-weight: bold;
-border-radius: 8px;
-cursor: pointer;
-transition: background 0.3s, transform 0.1s;
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-button:hover {
-background-color: #357ae8;
+.add-btn {
+    background-color: #34A853;
+    color: white;
 }
 
-button:active {
-transform: scale(0.98);
+.add-btn:hover {
+    background-color: #2C8C45;
 }
 
-button img {
-width: 20px;
-height: 20px;
+.edit-btn {
+    background-color: #FBBC05;
+    color: white;
 }
 
-#logout-btn {
-background-color: #DB4437;
+.edit-btn:hover {
+    background-color: #E0A800;
 }
 
-#logout-btn:hover {
-background-color: #C1351D;
-}
+    </style>
 
-/* 🎨 สไตล์สำหรับตาราง */
-table {
-width: 80%;
-margin: 20px auto;
-border-collapse: collapse;
-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-background: white;
-}
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-th, td {
-border: 1px solid #ddd;
-padding: 12px;
-text-align: center;
-}
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
+            authDomain: "sc362202project2024.firebaseapp.com",
+            projectId: "sc362202project2024",
+            storageBucket: "sc362202project2024.appspot.com",
+            messagingSenderId: "1073660061425",
+            appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
+        };
 
-th {
-background-color: #4285F4;
-color: white;
-}
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-tr:nth-child(even) {
-background-color: #f2f2f2;
-}
-</style>
+        document.addEventListener("DOMContentLoaded", () => {
+            const loginBtn = document.getElementById("login-btn");
+            const logoutBtn = document.getElementById("logout-btn");
+            const userInfo = document.getElementById("user-info");
+            const classroomTableBody = document.getElementById("classroom-table-body");
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+            loginBtn.addEventListener("click", () => {
+                signInWithPopup(auth, provider)
+                    .then((result) => {
+                        console.log("เข้าสู่ระบบสำเร็จ:", result.user);
+                    })
+                    .catch(error => console.error("เกิดข้อผิดพลาด:", error.message));
+            });
 
+            logoutBtn.addEventListener("click", () => {
+                signOut(auth).then(() => window.location.reload())
+                    .catch(error => console.error(error.message));
+            });
 
-const firebaseConfig = {
-apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
-authDomain: "sc362202project2024.firebaseapp.com",
-projectId: "sc362202project2024",
-storageBucket: "sc362202project2024.appspot.com",
-messagingSenderId: "1073660061425",
-appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
-};
+            async function loadClassrooms() {
+                const user = auth.currentUser;
+                if (!user) return;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+                classroomTableBody.innerHTML = "<tr><td colspan='5'>กำลังโหลด...</td></tr>";
 
-document.addEventListener("DOMContentLoaded", () => {
-const loginBtn = document.getElementById("login-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const userInfo = document.getElementById("user-info");
-const classroomTableBody = document.getElementById("classroom-table-body");
+                try {
+                    const q = query(collection(db, "classroom"), where("teacher_uid", "==", user.uid));
+                    const querySnapshot = await getDocs(q);
+                    classroomTableBody.innerHTML = "";
 
-// ฟังก์ชันเข้าสู่ระบบ
-loginBtn.addEventListener("click", () => {
-signInWithPopup(auth, provider)
-.then((result) => {
-console.log("เข้าสู่ระบบสำเร็จ:", result.user);
-})
-.catch(error => console.error("เกิดข้อผิดพลาด:", error.message));
-});
+                    let count = 1;
+                    querySnapshot.forEach((docSnapshot) => {
+                        const data = docSnapshot.data();
+                        const classId = docSnapshot.id;
+                        const className = data.class_name || "ไม่ทราบชื่อวิชา";
+                        const room = data.room_name || "ไม่มีข้อมูล";
 
-// ฟังก์ชันออกจากระบบ
-logoutBtn.addEventListener("click", () => {
-signOut(auth).then(() => {
-window.location.reload();
-}).catch(error => console.error(error.message));
-});
+                        classroomTableBody.innerHTML += `
+                            <tr>
+                                <td>${count++}</td>
+                                <td>${classId}</td>
+                                <td>${className}</td>
+                                <td>${room}</td>
+                                <td class="btn-group">
+                                    <button onclick="window.location.href='check_attendance.html?classId=${classId}'">เช็คชื่อ</button>
+                                    <button onclick="window.location.href='create_form_page.html?classId=${classId}'">สร้างฟอร์ม</button>
+                                    <button onclick="window.location.href='check_answers.html?classId=${classId}'">เช็คคำตอบ</button>
+                                    <button class="edit-btn" onclick="window.location.href='edit_classroom.html?classId=${classId}&className=${encodeURIComponent(className)}'">✏️ แก้ไขห้อง</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
 
-// ฟังก์ชันโหลดรายวิชา
-async function loadClassrooms() {
-const user = auth.currentUser;
-if (!user) return;
+                } catch (error) {
+                    console.error("Error loading classrooms:", error);
+                    classroomTableBody.innerHTML = "<tr><td colspan='5'>เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>";
+                }
+            }
 
-classroomTableBody.innerHTML = "<tr><td colspan='4'>กำลังโหลด...</td></tr>";
-
-try {
-const q = query(collection(db, "classroom"), where("teacher_uid", "==", user.uid));
-const querySnapshot = await getDocs(q);
-
-classroomTableBody.innerHTML = ""; // ล้างข้อมูลเก่า
-
-let count = 1;
-querySnapshot.forEach((docSnapshot) => {
-const data = docSnapshot.data();
-const classId = docSnapshot.id;
-const className = data.class_name || "ไม่ทราบชื่อวิชา";
-const room = data.room || "ไม่มีข้อมูล";
-const imageUrl = data.image_url || "default.jpg";
-
-classroomTableBody.innerHTML += `
-<tr>
-<td>${count++}</td>
-<td>${classId}</td>
-<td>${className}</td>
-<td>${room}</td>
-<td>
-<button onclick="checkAttendance('${classId}')">เช็คชื่อ</button>
-</td>
-</tr>
-`;
-});
-
-} catch (error) {
-console.error("Error loading classrooms:", error);
-classroomTableBody.innerHTML = "<tr><td colspan='4'>เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>";
-}
-}
-
-// ฟังก์ชันเช็คชื่อเข้าเรียน
-window.checkAttendance = async function (cid) {
-const user = auth.currentUser;
-if (!user) return;
-try {
-const attendanceRef = doc(db, "classroom", cid, "attendance", user.uid);
-await setDoc(attendanceRef, { timestamp: serverTimestamp() }, { merge: true });
-alert("เช็คชื่อเรียบร้อย!");
-} catch (error) {
-console.error("Error checking attendance:", error);
-}
-};
-
-// ตรวจสอบสถานะการล็อกอิน
-onAuthStateChanged(auth, (user) => {
-if (user) {
-userInfo.innerHTML = `
-<img src="${user.photoURL}" width="50" style="border-radius: 50%;">
-<p>${user.displayName} (${user.email})</p>
-`;
-loginBtn.style.display = "none";
-logoutBtn.style.display = "inline-block";
-
-// ✅ โหลดข้อมูลห้องเรียน
-loadClassrooms();
-
-} else {
-userInfo.innerHTML = "<p>กรุณาเข้าสู่ระบบ</p>";
-classroomTableBody.innerHTML = "";
-loginBtn.style.display = "inline-flex";
-logoutBtn.style.display = "none";
-}
-});
-});
-</script>
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userInfo.innerHTML = `
+                        <img src="${user.photoURL}" width="50" style="border-radius: 50%;">
+                        <p>${user.displayName} (${user.email})</p>
+                    `;
+                    loginBtn.style.display = "none";
+                    logoutBtn.style.display = "inline-block";
+                    loadClassrooms();
+                } else {
+                    userInfo.innerHTML = "<p>กรุณาเข้าสู่ระบบ</p>";
+                    classroomTableBody.innerHTML = "<tr><td colspan='5'>กรุณาเข้าสู่ระบบ...</td></tr>";
+                    loginBtn.style.display = "inline-flex";
+                    logoutBtn.style.display = "none";
+                }
+            });
+        });
+    </script>
 </head>
-
 <body>
-<h2>ระบบจัดการห้องเรียน</h2>
-<div id="user-info"></div>
-<hr>
-<button id="login-btn">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png"&gt;>
-เข้าสู่ระบบด้วย Google
-</button>
-<button id="logout-btn" style="display: none;">ออกจากระบบ</button>
-<hr>
-<button onclick="window.location.href='add_classroom.html'"> เพิ่มวิชา</button>
-<button onclick="window.location.href='edit_profile.html'"> แก้ไขข้อมูลส่วนตัว</button>
-<hr>
-<h3>รายชื่อวิชาที่สอน</h3>
-
-<table>
-<thead>
-<tr>
-<th>#</th>
-<th>รหัสวิชา</th>
-<th>ชื่อวิชา</th>
-<th>ห้องเรียน</th>
-<th>เช็คชื่อ</th>
-</tr>
-</thead>
-<tbody id="classroom-table-body">
-<tr>
-<td colspan="4">กรุณาเข้าสู่ระบบ...</td>
-</tr>
-</tbody>
-</table>
+    <div class="container">
+        <h2>ระบบจัดการห้องเรียน</h2>
+        <div id="user-info"></div>
+        <hr>
+        <button id="login-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg">
+            เข้าสู่ระบบด้วย Google
+            
+        </button>
+       
+        <button id="logout-btn" style="display: none;">ออกจากระบบ</button>
+        <hr>
+        <div class="button-group">
+            <button class="action-btn add-btn" onclick="window.location.href='add_classroom.html'">➕ เพิ่มวิชา</button>
+            <button class="action-btn edit-btn" onclick="window.location.href='edit_profile.html'">✏️ แก้ไขโปรไฟล์</button>
+        </div>
+        
+        <h3>รายชื่อวิชาที่สอน</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>รหัสวิชา</th>
+                    <th>ชื่อวิชา</th>
+                    <th>ห้องเรียน</th>
+                    <th>การกระทำ</th>
+                </tr>
+            </thead>
+            
+            <tbody id="classroom-table-body"></tbody>
+        </table>
+    </div>
 </body>
-
 </html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกคำถาม</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #f9f9f9, #eef2f3);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #34A853;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #2C8C45;
+        }
+
+        .qrcode-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+
+        #qrcode {
+            margin-top: 10px;
+        }
+
+        .success-message {
+            display: none;
+            color: green;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>บันทึกคำถาม</h2>
+        <label for="question">คำถาม:</label>
+        <input type="text" id="question" placeholder="กรอกคำถาม">
+
+        <label for="answer">คำตอบ:</label>
+        <input type="text" id="answer" placeholder="กรอกคำตอบ">
+
+        <button id="saveBtn">📌 บันทึกคำถาม</button>
+
+        <p class="success-message" id="successMsg">✅ บันทึกคำถามสำเร็จ!</p>
+
+        <div class="qrcode-container">
+            <h3>QR Code:</h3>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
+            authDomain: "sc362202project2024.firebaseapp.com",
+            projectId: "sc362202project2024",
+            storageBucket: "sc362202project2024.appspot.com",
+            messagingSenderId: "1073660061425",
+            appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function saveQuestion() {
+            const questionText = document.getElementById("question").value.trim();
+            const answerText = document.getElementById("answer").value.trim();
+            const successMsg = document.getElementById("successMsg");
+
+            if (!questionText || !answerText) {
+                alert("⚠️ กรุณากรอกคำถามและคำตอบ");
+                return;
+            }
+
+            try {
+                const docRef = await addDoc(collection(db, "questions"), {
+                    code: "1",
+                    date: serverTimestamp(),
+                    question_no: "1",
+                    question_show: true,
+                    question_text: questionText,
+                    answer_text: answerText,
+                    status: 1
+                });
+
+                const examUrl = `https://yourdomain.com/exam/${docRef.id}`;
+                document.getElementById("qrcode").innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), examUrl);
+
+                successMsg.style.display = "block";
+                setTimeout(() => successMsg.style.display = "none", 3000);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+            }
+        }
+
+        document.getElementById("saveBtn").addEventListener("click", saveQuestion);
+    </script>
+</body>
+</html>

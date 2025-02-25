@@ -4,74 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เพิ่มวิชา</title>
-    <style>
-        body {
-    font-family: 'Kanit', sans-serif;
-    background-color: #f4f7f9;
-    text-align: center;
-    padding: 20px;
-}
-
-h2 {
-    color: #333;
-}
-
-div {
-    margin-bottom: 15px;
-}
-
-
-
-input[type="text"],
-input[type="file"] {
-    width: 80%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-button {
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 5px;
-}
-
-button:hover {
-    background-color: #357ae8;
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-img {
-    display: block;
-    margin: 10px auto;
-    border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // ตั้งค่า Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
             authDomain: "sc362202project2024.firebaseapp.com",
             projectId: "sc362202project2024",
-            storageBucket: "sc362202project2024.appspot.com", // ✅ แก้ไข
+            storageBucket: "sc362202project2024.appspot.com",
             messagingSenderId: "1073660061425",
             appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
         };
@@ -83,31 +28,26 @@ img {
 
         let currentUser = null;
 
-        // ตรวจสอบการเข้าสู่ระบบ
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                console.log("User logged in:", user);
             } else {
-                console.log("No user logged in");
                 window.location.href = "index.html";
             }
         });
 
-        // ฟังก์ชันเพิ่มวิชา
         async function addClassroom() {
             const classId = document.getElementById("class_id").value.trim();
             const className = document.getElementById("class_name").value.trim();
             const roomName = document.getElementById("room_name").value.trim();
-            const imageUrl = document.getElementById("class_image").src; // ✅ ใช้ค่าที่อัปโหลดมา
+            const imageUrl = document.getElementById("class_image").src;
 
             if (!classId || !className || !roomName) {
-                alert("กรุณากรอกข้อมูลให้ครบถ้วน!");
+                Swal.fire("ผิดพลาด!", "กรุณากรอกข้อมูลให้ครบถ้วน", "error");
                 return;
             }
-
             if (!currentUser) {
-                alert("กรุณาล็อกอินก่อนทำรายการ");
+                Swal.fire("ไม่ได้ล็อกอิน!", "กรุณาล็อกอินก่อนทำรายการ", "warning");
                 return;
             }
 
@@ -121,65 +61,59 @@ img {
                     teacher_uid: currentUser.uid,
                     created_at: serverTimestamp()
                 });
-
-                // เพิ่มข้อมูลไปยัง collection ของอาจารย์
-                const userClassroomRef = doc(db, "users", currentUser.uid, "classroom", classId);
-                await setDoc(userClassroomRef, { status: 1 });
-
-                alert("เพิ่มวิชาสำเร็จ!");
-                window.location.href = "index.html";
+                Swal.fire("สำเร็จ!", "เพิ่มวิชาสำเร็จ", "success").then(() => {
+                    window.location.href = "index.html";
+                });
             } catch (error) {
-                console.error("เกิดข้อผิดพลาด", error);
-                alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
+                Swal.fire("เกิดข้อผิดพลาด", error.message, "error");
             }
         }
 
-        // ฟังก์ชันอัปโหลดรูปภาพ
         async function uploadImage(event) {
             const file = event.target.files[0];
             if (!file) return;
+            document.getElementById("loading_spinner").classList.remove("hidden");
 
-            const storageRef = ref(storage, classroom_images/${Date.now()}_${file.name});
-
+            const storageRef = ref(storage, `classroom_images/${Date.now()}_${file.name}`);
             try {
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
-
                 document.getElementById("class_image").src = downloadURL;
-                console.log("อัปโหลดรูปภาพสำเร็จ", downloadURL);
+                document.getElementById("loading_spinner").classList.add("hidden");
             } catch (error) {
-                console.error("อัปโหลดรูปไม่สำเร็จ", error);
-                alert("อัปโหลดรูปไม่สำเร็จ");
+                Swal.fire("อัปโหลดรูปไม่สำเร็จ", error.message, "error");
             }
         }
 
-        // ทำให้ฟังก์ชันสามารถเรียกใช้ได้ใน HTML
         window.addClassroom = addClassroom;
         window.uploadImage = uploadImage;
     </script>
 </head>
-<body>
-    <h2>เพิ่มวิชา</h2>
-    <div>
-        <label>รหัสวิชา:</label>
-        <input type="text" id="class_id">
+<body class="bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center min-h-screen">
+    <div class="bg-white/30 backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-100 mb-4 text-center">เพิ่มวิชา</h2>
+        <div class="mb-4">
+            <label class="block text-gray-200">รหัสวิชา:</label>
+            <input type="text" id="class_id" class="w-full p-2 border rounded-lg bg-white/80">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-200">ชื่อวิชา:</label>
+            <input type="text" id="class_name" class="w-full p-2 border rounded-lg bg-white/80">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-200">ชื่อห้องเรียน:</label>
+            <input type="text" id="room_name" class="w-full p-2 border rounded-lg bg-white/80">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-200">เลือกรูปภาพ:</label>
+            <input type="file" accept="image/*" onchange="uploadImage(event)" class="w-full p-2 border rounded-lg bg-white/80">
+            <div class="flex justify-center mt-2">
+                <img id="class_image" src="default.jpg" class="w-32 h-32 rounded-lg shadow">
+            </div>
+            <div id="loading_spinner" class="hidden text-center text-white mt-2">กำลังอัปโหลด...</div>
+        </div>
+        <button onclick="addClassroom()" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">บันทึกวิชา</button>
+        <button onclick="window.location.href='index.html'" class="w-full bg-gray-400 text-white py-2 rounded-lg mt-2 hover:bg-gray-500 transition">กลับหน้าหลัก</button>
     </div>
-    <div>
-        <label>ชื่อวิชา:</label>
-        <input type="text" id="class_name">
-    </div>
-    <div>
-        <label>ชื่อห้องเรียน:</label>
-        <input type="text" id="room_name">
-    </div>
-    <div>
-        <label>เลือกรูปภาพ:</label>
-        <input type="file" accept="image/*" onchange="uploadImage(event)">
-        <br>
-        <img id="class_image" src="default.jpg" width="150">
-    </div>
-    <button onclick="addClassroom()">บันทึกวิชา</button>
-    <button onclick="window.location.href='index.html'">กลับหน้าหลัก</button>
-    
 </body>
 </html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เช็คชื่อเข้าเรียน</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        h2, h3 {
+            color: #333;
+        }
+
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #357ae8;
+        }
+
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .loading {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>เช็คชื่อเข้าเรียน</h2>
+    <h3>วิชา: <span id="class-name">กำลังโหลด...</span></h3>
+    <h3>จำนวนนักศึกษา: <span id="student-count">กำลังโหลด...</span></h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>รหัสนักศึกษา</th>
+                <th>ชื่อ-สกุล</th>
+                <th>รูปนักศึกษา</th>
+                <th>มาเรียน</th>
+                <th>มาสาย</th>
+                <th>ขาดเรียน</th>
+            </tr>
+        </thead>
+        <tbody id="attendance-table-body">
+            <tr>
+                <td colspan="7" class="loading">กำลังโหลดข้อมูล...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button onclick="submitAttendance()">ยืนยันการเช็คชื่อ</button>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
+            authDomain: "sc362202project2024.firebaseapp.com",
+            projectId: "sc362202project2024",
+            storageBucket: "sc362202project2024.appspot.com",
+            messagingSenderId: "1073660061425",
+            appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classId = urlParams.get("classId") || "CP1101";
+            const classNameElement = document.getElementById("class-name");
+            const studentCountElement = document.getElementById("student-count");
+            const attendanceTableBody = document.getElementById("attendance-table-body");
+
+            try {
+                const classDoc = await db.collection("classroom").doc(classId).get();
+                if (classDoc.exists) {
+                    const classData = classDoc.data();
+                    classNameElement.textContent = classData.class_name;
+
+                    const studentsSnapshot = await db.collection("classroom").doc(classId).collection("students").get();
+                    attendanceTableBody.innerHTML = "";
+
+                    if (studentsSnapshot.empty) {
+                        attendanceTableBody.innerHTML = `<tr><td colspan="7">ไม่มีข้อมูลนักศึกษา</td></tr>`;
+                        studentCountElement.textContent = "0 คน";
+                        return;
+                    }
+
+                    let count = 1;
+                    studentsSnapshot.forEach((doc) => {
+                        const student = doc.data();
+                        const photoUrl = student.photo || "https://via.placeholder.com/50";
+                        attendanceTableBody.innerHTML += `
+                            <tr>
+                                <td>${count++}</td>
+                                <td>${student.stdid}</td>
+                                <td>${student.name}</td>
+                                <td><img src="${photoUrl}" alt="รูปนักศึกษา"></td>
+                                <td><input type="radio" name="attendance-${doc.id}" value="1"></td>
+                                <td><input type="radio" name="attendance-${doc.id}" value="2"></td>
+                                <td><input type="radio" name="attendance-${doc.id}" value="0"></td>
+                            </tr>`;
+                    });
+
+                    studentCountElement.textContent = `${studentsSnapshot.size} คน`;
+                } else {
+                    alert("ไม่พบข้อมูลห้องเรียน!");
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
+                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+            }
+        });
+
+        async function submitAttendance() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classId = urlParams.get("classId") || "CP1101";
+            const attendanceTableBody = document.getElementById("attendance-table-body");
+            const rows = attendanceTableBody.getElementsByTagName("tr");
+
+            const updates = [];
+            for (const row of rows) {
+                const studentId = row.cells[1]?.textContent.trim();
+                if (!studentId) continue;
+                const attendanceRadios = row.querySelectorAll(`input[name="attendance-${studentId}"]:checked`);
+                if (attendanceRadios.length === 0) continue;
+                const status = parseInt(attendanceRadios[0].value, 10);
+                updates.push({ studentId, status });
+            }
+
+            try {
+                const batch = db.batch();
+                for (const update of updates) {
+                    const studentRef = db.collection("classroom").doc(classId).collection("students").doc(update.studentId);
+                    batch.update(studentRef, { status: update.status });
+                }
+                await batch.commit();
+                alert("บันทึกการเช็คชื่อเรียบร้อยแล้ว!");
+                window.location.href = "index.html";
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
+                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+            }
+        }
+    </script>
+</body>
+
+</html>
