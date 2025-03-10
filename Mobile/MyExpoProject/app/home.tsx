@@ -12,7 +12,6 @@ import { getAuth, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { Avatar, Card } from "@rneui/themed";
 import { TextInput, Button } from "react-native-paper";
-import * as BarcodeScanner from "expo-barcode-scanner";
 import { DocumentData } from "firebase/firestore";
 
 const HomeScreen = () => {
@@ -31,7 +30,6 @@ const HomeScreen = () => {
   const [classroomId, setClassroomId] = useState("");
   const [loading, setLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -54,7 +52,6 @@ const HomeScreen = () => {
 
   useEffect(() => {
     (async () => {
-      const { status } = await BarcodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
     })();
   }, []);
@@ -81,14 +78,9 @@ const HomeScreen = () => {
     setClassroomId("");
   };
 
-  const handleScanQRCode = () => {
-    if (scanned) {
-      setScanned(false);
-    }
-  };
+
 
   const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
-    setScanned(true);
     Alert.alert("QR Code Scanned", `Type: ${type}\nData: ${data}`);
   };
 
@@ -105,7 +97,7 @@ const HomeScreen = () => {
       style={styles.background}
     >
       <View style={styles.container}>
-        <Text style={styles.title}>CheckIn</Text>
+        <Text style={styles.title}>Join Classroom</Text>
 
         {loading ? (
           <ActivityIndicator size="large" color="#4CAF50" />
@@ -147,34 +139,10 @@ const HomeScreen = () => {
           Join Classroom
         </Button>
 
-        <Button
-          mode="contained"
-          onPress={handleScanQRCode}
-          style={styles.scanButton}
-        >
-          Scan QR Code
-        </Button>
-
-        {scanned && (
-          <Button
-            mode="contained"
-            onPress={handleScanQRCode}
-            style={styles.scanButton}
-          >
-            Scan Again
-          </Button>
-        )}
-
         <Button mode="outlined" onPress={handleLogout} style={styles.logoutButton}>
           Logout
         </Button>
-
-        <View style={styles.scanArea}>
-          <BarcodeScanner.BarCodeScanner
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-            style={StyleSheet.absoluteFillObject}
-          />
-        </View>
+        
       </View>
     </ImageBackground>
   );
