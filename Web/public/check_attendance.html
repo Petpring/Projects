@@ -5,41 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เช็คชื่อเข้าเรียน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Kanit', sans-serif;
             text-align: center;
-            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7fc;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
         }
 
         h2, h3 {
             color: #333;
         }
 
-        button {
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background-color: #357ae8;
-        }
-
         table {
-            width: 90%;
-            margin: 20px auto;
+            width: 100%;
+            margin-top: 20px;
             border-collapse: collapse;
             background: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         th, td {
@@ -64,42 +60,64 @@
             object-fit: cover;
         }
 
-        .loading {
-            font-size: 18px;
-            font-weight: bold;
-            color: #555;
+        .button-primary {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .button-primary:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            margin-top: 20px;
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
-    <h2>เช็คชื่อเข้าเรียน</h2>
-    <h3>วิชา: <span id="class-name">กำลังโหลด...</span></h3>
-    <h3>จำนวนนักศึกษา: <span id="student-count">กำลังโหลด...</span></h3>
+    <div class="container">
+        <h2>เช็คชื่อเข้าเรียน</h2>
+        <h3>วิชา: <span id="class-name">กำลังโหลด...</span></h3>
+        <h3>จำนวนนักศึกษา: <span id="student-count">กำลังโหลด...</span></h3>
 
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>รหัสนักศึกษา</th>
-                <th>ชื่อ-สกุล</th>
-                <th>รูปนักศึกษา</th>
-                <th>มาเรียน</th>
-                <th>มาสาย</th>
-                <th>ขาดเรียน</th>
-            </tr>
-        </thead>
-        <tbody id="attendance-table-body">
-            <tr>
-                <td colspan="7" class="loading">กำลังโหลดข้อมูล...</td>
-            </tr>
-        </tbody>
-    </table>
+        <div class="button-group">
+            <a href="create_form_page.html" class="button-primary">ไปหน้าสร้างฟอร์ม</a>
+            <a id="attendance-link" class="button-primary">ดูสถานะการเข้าเรียน</a>
+        </div>
 
-    <button onclick="submitAttendance()">ยืนยันการเช็คชื่อ</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>รหัสนักศึกษา</th>
+                    <th>ชื่อ-สกุล</th>
+                    <th>รูปนักศึกษา</th>
+                    <th>มาเรียน</th>
+                    <th>มาสาย</th>
+                    <th>ขาดเรียน</th>
+                </tr>
+            </thead>
+            <tbody id="attendance-table-body">
+                <tr>
+                    <td colspan="7">กำลังโหลดข้อมูล...</td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="button-primary" onclick="submitAttendance()">ยืนยันการเช็คชื่อ</button>
+    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
@@ -116,48 +134,38 @@
         document.addEventListener("DOMContentLoaded", async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const classId = urlParams.get("classId") || "CP1101";
-            const classNameElement = document.getElementById("class-name");
-            const studentCountElement = document.getElementById("student-count");
-            const attendanceTableBody = document.getElementById("attendance-table-body");
+            document.getElementById("attendance-link").href = `Attendance_Status.html?classId=${classId}`;
 
             try {
                 const classDoc = await db.collection("classroom").doc(classId).get();
-                if (classDoc.exists) {
-                    const classData = classDoc.data();
-                    classNameElement.textContent = classData.class_name;
-
-                    const studentsSnapshot = await db.collection("classroom").doc(classId).collection("students").get();
-                    attendanceTableBody.innerHTML = "";
-
-                    if (studentsSnapshot.empty) {
-                        attendanceTableBody.innerHTML = `<tr><td colspan="7">ไม่มีข้อมูลนักศึกษา</td></tr>`;
-                        studentCountElement.textContent = "0 คน";
-                        return;
-                    }
-
-                    let count = 1;
-                    studentsSnapshot.forEach((doc) => {
-                        const student = doc.data();
-                        const photoUrl = student.photo || "https://via.placeholder.com/50";
-                        attendanceTableBody.innerHTML += `
-                            <tr>
-                                <td>${count++}</td>
-                                <td>${student.stdid}</td>
-                                <td>${student.name}</td>
-                                <td><img src="${photoUrl}" alt="รูปนักศึกษา"></td>
-                                <td><input type="radio" name="attendance-${doc.id}" value="1"></td>
-                                <td><input type="radio" name="attendance-${doc.id}" value="2"></td>
-                                <td><input type="radio" name="attendance-${doc.id}" value="0"></td>
-                            </tr>`;
-                    });
-
-                    studentCountElement.textContent = `${studentsSnapshot.size} คน`;
-                } else {
-                    alert("ไม่พบข้อมูลห้องเรียน!");
+                if (!classDoc.exists) {
+                    throw new Error("ไม่พบข้อมูลห้องเรียน!");
                 }
+                document.getElementById("class-name").textContent = classDoc.data().class_name;
+
+                const studentsSnapshot = await db.collection("classroom").doc(classId).collection("students").get();
+                const tableBody = document.getElementById("attendance-table-body");
+                tableBody.innerHTML = "";
+
+                let count = 1;
+                studentsSnapshot.forEach(doc => {
+                    const student = doc.data();
+                    const photoUrl = student.photo || "https://via.placeholder.com/50";
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td>${count++}</td>
+                            <td>${student.stdid}</td>
+                            <td>${student.name}</td>
+                            <td><img src="${photoUrl}" alt="รูปนักศึกษา"></td>
+                            <td><input type="radio" name="attendance-${doc.id}" value="1"></td>
+                            <td><input type="radio" name="attendance-${doc.id}" value="2"></td>
+                            <td><input type="radio" name="attendance-${doc.id}" value="0"></td>
+                        </tr>`;
+                });
+
+                document.getElementById("student-count").textContent = `${studentsSnapshot.size} คน`;
             } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
-                alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+                alert(error.message);
             }
         });
 
@@ -167,28 +175,26 @@
             const attendanceTableBody = document.getElementById("attendance-table-body");
             const rows = attendanceTableBody.getElementsByTagName("tr");
 
-            const updates = [];
+            let attendanceData = {};
             for (const row of rows) {
                 const studentId = row.cells[1]?.textContent.trim();
                 if (!studentId) continue;
-                const attendanceRadios = row.querySelectorAll(`input[name="attendance-${studentId}"]:checked`);
-                if (attendanceRadios.length === 0) continue;
-                const status = parseInt(attendanceRadios[0].value, 10);
-                updates.push({ studentId, status });
+                const radios = row.querySelectorAll("input[type='radio']:checked");
+                attendanceData[studentId] = radios.length > 0 ? parseInt(radios[0].value) : 0;
             }
 
             try {
-                const batch = db.batch();
-                for (const update of updates) {
-                    const studentRef = db.collection("classroom").doc(classId).collection("students").doc(update.studentId);
-                    batch.update(studentRef, { status: update.status });
-                }
-                await batch.commit();
-                alert("บันทึกการเช็คชื่อเรียบร้อยแล้ว!");
-                window.location.href = "index.html";
+                await db.collection("attendance").doc(classId).set({
+                    classId: classId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    students: attendanceData
+                });
+
+                alert("บันทึกการเช็คชื่อสำเร็จ!");
+                document.querySelector(".button-primary").disabled = true;
             } catch (error) {
-                console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล:", error);
                 alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+                console.error(error);
             }
         }
     </script>
