@@ -140,7 +140,7 @@
                     status: 1
                 });
 
-                const examUrl = `https://yourdomain.com/exam/${docRef.id}`;
+                const examUrl = docRef.id;
                 document.getElementById("qrcode").innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), examUrl);
 
