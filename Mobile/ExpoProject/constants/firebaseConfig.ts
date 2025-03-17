@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -11,7 +11,15 @@ const firebaseConfig = {
 };
 
 // ✅ ต้อง `initializeApp` เพียงครั้งเดียว
-const app = initializeApp(firebaseConfig);
+// const app = initializeApp(firebaseConfig);
+
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+
 export { auth, app };
+
+
+export default app;
+
+

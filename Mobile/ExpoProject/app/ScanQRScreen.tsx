@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Alert, ActivityIndicator, Animated } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import { Button, FAB, Text } from "react-native-paper";
+import { FAB, Text } from "react-native-paper";
 
 const ScanQRScreen = () => {
   const router = useRouter();
@@ -27,13 +27,55 @@ const ScanQRScreen = () => {
     }).start();
   }, [permission]);
 
+  // Parse the QR data to handle attendance check-in or questions
   const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
     if (scanned) return;
     setScanned(true);
 
-    Alert.alert("QR Code Scanned", `Data: ${data}`, [
-      { text: "OK", onPress: () => router.replace({ pathname: "/QRCodeResult", params: { qrData: data } }) },
-    ]);
+    try {
+      // Try to parse the QR data as JSON
+      const qrData = JSON.parse(data);
+      
+      if (qrData.type === "question" && qrData.classroomId && qrData.attendanceQuestionsId) {
+        // Navigate to answer question screen
+        router.push({
+          pathname: "/Answer-question",
+          params: { 
+            classroomId: qrData.classroomId, 
+            attendanceQuestionsId: qrData.attendanceQuestionsId 
+          }
+        });
+      } else if (qrData.type === "attendance" && qrData.classroomId) {
+        // Navigate to QR code result screen for attendance
+        router.push({
+          pathname: "/QRCodeResult",
+          params: { qrData: JSON.stringify(qrData) }
+        });
+      } else {
+        // Unknown QR format, just show the data
+        router.push({
+          pathname: "/QRCodeResult",
+          params: { qrData: data }
+        });
+      }
+    } catch (error) {
+      // If parsing failed, treat as simple string data
+      Alert.alert("QR Code Scanned", `Data: ${data}`, [
+        {
+          text: "View Details",
+          onPress: () => {
+            router.push({
+              pathname: "/QRCodeResult",
+              params: { qrData: data }
+            });
+          },
+        },
+        {
+          text: "Scan Again",
+          onPress: () => setScanned(false),
+        }
+      ]);
+    }
   };
 
   if (!permission) {
@@ -44,10 +86,17 @@ const ScanQRScreen = () => {
       </View>
     );
   }
+
   if (!permission.granted) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>No access to camera</Text>
+        <Text style={styles.permissionText}>Camera access denied</Text>
+        <FAB
+          style={styles.permissionButton}
+          icon="camera"
+          label="Request Camera Permission"
+          onPress={() => requestPermission()}
+        />
       </View>
     );
   }
@@ -62,7 +111,8 @@ const ScanQRScreen = () => {
       >
         {/* Overlay Guide */}
         <View style={styles.overlay}>
-          <View style={styles.scanArea} />
+          <View style={styles.scanArea}/>
+          <Text style={styles.scanText}>Position QR code inside the square</Text>
         </View>
       </CameraView>
 
@@ -94,6 +144,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  permissionText: {
+    fontSize: 18,
+    color: "#333",
+    marginBottom: 20,
+  },
+  permissionButton: {
+    backgroundColor: "#6200EE",
+  },
   camera: {
     flex: 1,
     justifyContent: "center",
@@ -115,6 +173,14 @@ const styles = StyleSheet.create({
     borderColor: "#FFF",
     borderRadius: 10,
     opacity: 0.6,
+  },
+  scanText: {
+    color: "#FFF",
+    marginTop: 20,
+    fontSize: 16,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    padding: 10,
+    borderRadius: 5,
   },
   fab: {
     position: "absolute",

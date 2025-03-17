@@ -36,7 +36,7 @@ export default function RootLayout() {
         <Stack.Screen name="home" options={{ title: "Home" }} />
         <Stack.Screen name="QRCodeResult" options={{ title: "QR Code Result" }} />
         <Stack.Screen name="ScanQRScreen" options={{ title: "Scan QR" }} />
-        <Stack.Screen name="AnswerQuestionScreen" options={{ title: "Answer Question" }} />
+        <Stack.Screen name="Answer-question" options={{ title: "Answer Question" }} />
         <Stack.Screen name="+not-found" options={{ title: "Not Found" }} />
       </Stack>
       <StatusBar style="auto" />

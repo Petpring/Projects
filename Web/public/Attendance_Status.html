@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สถานะการเช็คชื่อ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        .status {
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .present {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .late {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        .absent {
+            background-color: #F44336;
+            color: white;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2>สถานะการเช็คชื่อ</h2>
+        <h3>วิชา: <span id="class-name">⏳ กำลังโหลด...</span></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>รหัสนักศึกษา</th>
+                    <th>สถานะ</th>
+                </tr>
+            </thead>
+            <tbody id="status-table-body">
+                <tr>
+                    <td colspan="3">⏳ กำลังโหลดข้อมูล...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBcU6xE0qaj_Cm2CQrPsMvyDSEg8zsWX_c",
+            authDomain: "sc362202project2024.firebaseapp.com",
+            projectId: "sc362202project2024",
+            storageBucket: "sc362202project2024.appspot.com",
+            messagingSenderId: "1073660061425",
+            appId: "1:1073660061425:web:de231b427a0c34a6d16b50"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function loadAttendanceStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const classId = urlParams.get("classId");
+
+            const classNameElem = document.getElementById("class-name");
+            const tableBody = document.getElementById("status-table-body");
+
+            if (!classId) {
+                classNameElem.innerHTML = "⚠️ ไม่มีข้อมูลวิชา";
+                tableBody.innerHTML = "<tr><td colspan='3'>❌ โปรดระบุรหัสวิชาใน URL</td></tr>";
+                return;
+            }
+
+            classNameElem.innerHTML = `⏳ กำลังโหลด... (${classId})`;
+            tableBody.innerHTML = "<tr><td colspan='3'>⏳ กำลังโหลดข้อมูล...</td></tr>";
+
+            try {
+                console.log(`📂 โหลดข้อมูลของห้อง: ${classId}`);
+                const classRef = db.collection("attendance").doc(classId);
+                const attendanceDoc = await classRef.get();
+
+                if (!attendanceDoc.exists) {
+                    classNameElem.innerHTML = "⚠️ ไม่มีข้อมูลวิชา";
+                    tableBody.innerHTML = "<tr><td colspan='3'>❌ ไม่มีข้อมูลการเช็คชื่อ</td></tr>";
+                    return;
+                }
+
+                const attendanceData = attendanceDoc.data();
+                classNameElem.textContent = attendanceData.class_name || `📌 รหัสวิชา: ${classId}`;
+
+                const studentEntries = Object.entries(attendanceData.students || {});
+                if (studentEntries.length === 0) {
+                    tableBody.innerHTML = "<tr><td colspan='3'>❌ ไม่มีข้อมูลนักศึกษาในห้องนี้</td></tr>";
+                    return;
+                }
+
+                tableBody.innerHTML = studentEntries.map(([stdId, status], index) => {
+                    let statusText = "";
+                    let statusClass = "";
+
+                    switch (status) {
+                        case 1: statusText = "✅ มาเรียน"; statusClass = "present"; break;
+                        case 2: statusText = "⏳ มาสาย"; statusClass = "late"; break;
+                        default: statusText = "❌ ขาดเรียน"; statusClass = "absent";
+                    }
+
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${stdId}</td>
+                            <td class="status ${statusClass}">${statusText}</td>
+                        </tr>`;
+                }).join("");
+            } catch (error) {
+                console.error("⚠️ โหลดข้อมูลผิดพลาด:", error);
+                tableBody.innerHTML = "<tr><td colspan='3'>❌ โหลดข้อมูลไม่สำเร็จ</td></tr>";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadAttendanceStatus);
+    </script>
+</body>
+</html>

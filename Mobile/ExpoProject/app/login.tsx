@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Animated, Alert } from "react-native";
-import { auth } from "../constants/firebaseConfig"; // ✅ ใช้ `auth` ที่ถูก initialize แล้ว
+import { auth } from "../constants/firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "expo-router";
 import {
@@ -43,13 +43,13 @@ const LoginScreen = () => {
   };
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}> 
       <Card style={styles.card}>
         <Card.Title
-          title="Login"
+          title="Welcome to classroom"
           titleStyle={styles.title}
           left={(props) => (
-            <MaterialIcons name="person" {...props} size={30} color="#6200EE" />
+            <MaterialIcons name="login" {...props} size={30} color="#6200EE" />
           )}
         />
         <Card.Content>
@@ -60,6 +60,7 @@ const LoginScreen = () => {
             mode="outlined"
             left={<TextInput.Icon icon="email" />}
             style={styles.input}
+            autoCapitalize="none"
           />
 
           <TextInput
@@ -79,15 +80,14 @@ const LoginScreen = () => {
               mode="contained"
               onPress={handleLogin}
               style={styles.button}
+              contentStyle={styles.buttonContent}
             >
               Login
             </Button>
           )}
 
-          <Text
-            style={styles.switchText}
-            onPress={() => router.push("/register")}>
-            Don't have an account? Register
+          <Text style={styles.switchText} onPress={() => router.push("/register")}>
+            Don't have an account? <Text style={styles.switchTextBold}>Register</Text>
           </Text>
         </Card.Content>
       </Card>
@@ -100,21 +100,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "#F9FAFC",
     padding: 20,
   },
   card: {
     width: "100%",
     maxWidth: 400,
-    padding: 20,
-    borderRadius: 10,
+    padding: 25,
+    borderRadius: 15,
     elevation: 5,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
+    color: "#333",
+    marginBottom: 10,
   },
   input: {
     marginBottom: 15,
@@ -122,10 +128,17 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 10,
     backgroundColor: "#6200EE",
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 50,
   },
   switchText: {
     marginTop: 15,
     textAlign: "center",
+    color: "#555",
+  },
+  switchTextBold: {
     color: "#6200EE",
     fontWeight: "bold",
   },
